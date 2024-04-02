@@ -83,7 +83,7 @@ level_fac <- c("TX_NEW", "TX_CURR", "TX_PVLS_D", "TX_PVLS",
                "PP_PREV", "OVC_SERV", "OVC_HIVSTAT",
                "GEND_GBV", "AGYW_PREV")
 
-#Table 1a: Prioritization Table - pg 8 & 9 
+#Table 1: Prioritization Table - pg 8 & 9 
 table1 <- df_all %>% 
   clean_indicator() %>% 
   filter(fiscal_year == 2025,
@@ -99,7 +99,7 @@ table1 <- df_all %>%
                                   ageasentered %in% c("15-24", "25-34", "35-49", "50+") ~ "15+",
                                   TRUE ~ ageasentered)) %>% 
   group_by(fiscal_year, indicator, snuprioritization
-  ) %>% View() #include trendcoarse
+  ) %>% #include trendcoarse
   summarise(across(c(targets), sum, na.rm = TRUE)) %>% 
   ungroup() %>%
   #filter(!is.na(trendcoarse)) %>% 
@@ -112,7 +112,7 @@ table1 <- df_all %>%
   arrange(factor(indicator, levels = level_fac)) #%>% 
   #View()
 
-#Table 2a: Agency Table - pg 18 & 19
+#Table 2: Agency Table - pg 18 & 19
 table2 <- df_dp_mech %>% 
   clean_indicator() %>% 
   filter(fiscal_year == 2025,
