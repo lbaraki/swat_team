@@ -84,7 +84,7 @@ level_fac <- c("TX_NEW", "TX_CURR", "TX_PVLS_D", "TX_PVLS",
                "GEND_GBV", "AGYW_PREV")
 
 #Table 1: Prioritization Table - pg 8 & 9 
-table1 <- df_all %>% 
+table_1 <- df_all %>% 
   clean_indicator() %>% 
   filter(fiscal_year == 2025,
          indicator %in% c("TX_NEW", "TX_CURR", "TX_PVLS_D", "TX_PVLS",
@@ -98,10 +98,11 @@ table1 <- df_all %>%
   mutate(trendscoarse = case_when(ageasentered %in% c("<01", "01-09", "10-14") ~ "<15",
                                   ageasentered %in% c("15-24", "25-34", "35-49", "50+") ~ "15+",
                                   TRUE ~ ageasentered)) %>% 
-  group_by(fiscal_year, indicator, snuprioritization
+  group_by(fiscal_year, indicator, standardizeddisaggregate, snuprioritization
   ) %>% #include trendcoarse
   summarise(across(c(targets), sum, na.rm = TRUE)) %>% 
-  ungroup() %>%
+  ungroup() %>% 
+  #filter(indicator %in% c("PrEP_CT", "HTS_SELF", "HTS_TST", "PMTCT_STAT"))
   #filter(!is.na(trendcoarse)) %>% 
   pivot_wider(names_from = snuprioritization,
               values_from = targets) %>% 
@@ -113,7 +114,7 @@ table1 <- df_all %>%
   #View()
 
 #Table 2: Agency Table - pg 18 & 19
-table2 <- df_dp_mech %>% 
+table_2 <- df_dp_mech %>% 
   clean_indicator() %>% 
   filter(fiscal_year == 2025,
          indicator %in% c("TX_NEW", "TX_CURR", "TX_PVLS_D", "TX_PVLS",
