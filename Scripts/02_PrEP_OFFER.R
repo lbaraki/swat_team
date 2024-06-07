@@ -63,8 +63,9 @@
       indicator %in% c("PREP_OFFER"), 
       standardizeddisaggregate == "Total Numerator") %>% 
     mutate(period = gsub(" ", "", fy_q), #create period column from fy_q 
-           fiscal_year = str_sub(fy, 3,4) %>% as.integer() + 2000) %>%  #create fiscal_year column
-    group_by(indicator, period, #orgunituid, partner_name
+           fiscal_year = str_sub(fy, 3,4) %>% as.integer() + 2000) %>% #create fiscal_year column
+    group_by(indicator, period, #orgunituid,
+             #partner_name
              ) %>%
     summarise(value = sum(values,na.rm= T), .groups = "drop") #collapse values across orgunituid and partner_name
   
@@ -88,7 +89,9 @@
       indicator %in% c("PREP_OFFER"), 
       standardizeddisaggregate == "Age/Sex",
       sex == "Female",
-      ageasentered %in% c("15-19","20-24")) %>% 
+      ageasentered %in% c("15-19","20-24", 
+                          "25-29" #Eswatini includes this older age group 
+                          )) %>% 
     mutate(period = gsub(" ", "", fy_q), #create period column from fy_q 
            fiscal_year = str_sub(fy, 3,4) %>% as.integer() + 2000) %>%  #create fiscal_year column
     group_by(indicator, period, #partner_name
@@ -128,20 +131,24 @@
   #return_cascade(df_msd, 1)
   #return_cascade_plot(df_msd, F)
   
-  msd_prep <- df_msd %>%
+  msd_prep <- df_msd %>% 
     filter(fiscal_year == metadata$curr_fy,
            indicator %in% c("HTS_TST_NEG", "PrEP_NEW", "PrEP_CT"),
-           standardizeddisaggregate == "Total Numerator") %>% 
+           standardizeddisaggregate == "Total Numerator", 
+           prime_partner_name != "University Research Co., LLC"
+           ) %>% 
     group_by(indicator, fiscal_year, #standardizeddisaggregate, ageasentered, 
+             #prime_partner_name
              ) %>% 
-    summarise(across(starts_with("qtr"), sum, na.rm = T), .groups = "drop") 
+    summarise(across(starts_with("qtr"), sum, na.rm = T), .groups = "drop") #%>% View()
   
   men_prep <- df_msd %>%
     filter(fiscal_year == metadata$curr_fy,
            indicator %in% c("HTS_TST_NEG", "PrEP_NEW", "PrEP_CT"),
            standardizeddisaggregate %in% c("Modality/Age/Sex/Result", "Age/Sex"), 
            sex == "Male",
-           ageasentered %in% c("30-34")) %>% 
+           ageasentered %in% c("30-34"),
+           prime_partner_name != "University Research Co., LLC") %>% 
     group_by(indicator, fiscal_year, #standardizeddisaggregate, #ageasentered, sex 
     ) %>% 
     summarise(across(starts_with("qtr"), sum, na.rm = T), .groups = "drop") 
@@ -151,7 +158,10 @@
            indicator %in% c("HTS_TST_NEG", "PrEP_NEW", "PrEP_CT"),
            standardizeddisaggregate %in% c("Modality/Age/Sex/Result", "Age/Sex"), 
            sex == "Female",
-           ageasentered %in% c("15-19","20-24")) %>% 
+           ageasentered %in% c("15-19","20-24", 
+                               "25-29" #Eswatini includes this age band
+                               ),
+           prime_partner_name != "University Research Co., LLC") %>% 
     group_by(indicator, fiscal_year, #standardizeddisaggregate, ageasentered, sex
     ) %>% 
     summarise(across(starts_with("qtr"), sum, na.rm = T), .groups = "drop") 
@@ -161,7 +171,8 @@
            indicator %in% c(#"HTS_TST_NEG",
                             "PrEP_NEW", "PrEP_CT"),
            standardizeddisaggregate %in% c(
-             "Sex/PregnantBreastfeeding")) %>% 
+             "Sex/PregnantBreastfeeding"),
+           prime_partner_name != "University Research Co., LLC") %>% 
     group_by(indicator, fiscal_year, #ageasentered, #sex
     ) %>% 
     summarise(across(starts_with("qtr"), sum, na.rm = T), .groups = "drop") 
@@ -240,6 +251,24 @@
                               Ref id: {ref_id}"))
   
   si_save("Graphics/PrEPCascade_AGYW_FY24Q2.png")
+  
+  #AGYW Eswatini: 15- 29 (V2)
+  combined_agyw_df %>% 
+    arrange(desc(value)) %>% 
+    mutate(indc_order = fct_reorder(indicator, value, .desc = TRUE)) %>% #sort the indicators by values 
+    ggplot(aes(x = indc_order, y = value)) + 
+    geom_col(fill = glitr::denim, alpha = 0.9) + 
+    geom_text(aes(y = value,
+                  label = comma(value)), size = 12/.pt,
+              family = "Source Sans Pro", vjust = -.25) + 
+    scale_y_continuous()+ 
+    si_style_ygrid()+
+    labs(x = NULL, y = NULL,
+         title = glue(" {metadata$curr_pd} | PrEP Cascade: AGYW 15-29 yrs old"),
+         caption = glue::glue("PREP Custom Indicators & {metadata$source} |
+                              Ref id: {ref_id}"))
+  
+  si_save("Graphics/PrEPCascade_AGYW_V2_FY24Q2.png")
   
     #Men: 30-34 yrs old (ageasentered: "30-34", standardizeddisaggregate ***)
   combined_men_df %>% 
